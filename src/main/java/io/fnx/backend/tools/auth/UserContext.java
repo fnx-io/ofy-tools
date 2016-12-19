@@ -5,8 +5,8 @@ import com.googlecode.objectify.Key;
 /**
  *
  */
-public interface UserContext {
+public interface UserContext<ID, U extends User<ID>> {
 
-    Key<? extends User> getUserKey();
+    Key<U> getUserKey();
     UserRole getUserRole();
 }
