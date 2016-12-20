@@ -1,6 +1,6 @@
 package io.fnx.backend.tools.auth;
 
-public interface UserRole {
+public interface PrincipalRole {
 
     boolean isAdmin();
 

@@ -1,7 +1,7 @@
 package io.fnx.backend.tools.hydration;
 
 import com.googlecode.objectify.Key;
-import io.fnx.backend.tools.auth.User;
+import io.fnx.backend.tools.auth.Principal;
 
 /**
  * Context each hydration can use to decide what should be returned.
@@ -13,21 +13,21 @@ import io.fnx.backend.tools.auth.User;
  */
 public class HydrationContext {
 
-    protected User principal;
+    protected Principal principal;
 
-    public HydrationContext(User principal) {
+    public HydrationContext(Principal principal) {
         this.principal = principal;
     }
 
     public boolean isLogged() {
-        return principal != null && principal.getUserKey() != null;
+        return principal != null && principal.getPrincipalKey() != null;
     }
 
-    public Key<? extends User> getUserKey() {
+    public Key<? extends Principal> getPrincipalKey() {
         if (principal == null) {
             return null;
         } else {
-            return principal.getUserKey();
+            return principal.getPrincipalKey();
         }
     }
 }

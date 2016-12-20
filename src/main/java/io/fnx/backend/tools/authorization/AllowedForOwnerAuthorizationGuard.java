@@ -1,8 +1,8 @@
 package io.fnx.backend.tools.authorization;
 
 import com.googlecode.objectify.Key;
-import io.fnx.backend.tools.auth.User;
-import io.fnx.backend.tools.auth.UserRole;
+import io.fnx.backend.tools.auth.Principal;
+import io.fnx.backend.tools.auth.PrincipalRole;
 import io.fnx.backend.tools.ofy.OfyProvider;
 import org.aopalliance.intercept.MethodInvocation;
 
@@ -47,10 +47,10 @@ public class AllowedForOwnerAuthorizationGuard implements AuthorizationGuard {
     @SuppressWarnings("unchecked")
     public AuthorizationResult guardInvocation( MethodInvocation invocation,
                                                 Annotation annotation,
-                                                UserRole callingRole,
-                                                Key<? extends User> callingUser) {
+                                                PrincipalRole callingRole,
+                                                Key<? extends Principal> callingPrincipal) {
         final AuthorizationResult failure = AuthorizationResult.failure("Insufficient rights to access resource.");
-        if (callingUser == null) {
+        if (callingPrincipal == null) {
             return failure;
         }
         final Object[] args = invocation.getArguments();
@@ -82,7 +82,7 @@ public class AllowedForOwnerAuthorizationGuard implements AuthorizationGuard {
             final Key ownerKey = owned.getOwnerKey();
             if (ownerKey == null) continue;
 
-            if (!callingUser.equals(ownerKey)) return failure;
+            if (!callingPrincipal.equals(ownerKey)) return failure;
         }
         return AuthorizationResult.SUCCESS;
     }

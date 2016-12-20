@@ -1,8 +1,8 @@
 package io.fnx.backend.tools.authorization;
 
 import com.googlecode.objectify.Key;
-import io.fnx.backend.tools.auth.User;
-import io.fnx.backend.tools.auth.UserRole;
+import io.fnx.backend.tools.auth.Principal;
+import io.fnx.backend.tools.auth.PrincipalRole;
 import org.aopalliance.intercept.MethodInvocation;
 
 import java.lang.annotation.Annotation;
@@ -40,8 +40,8 @@ public class AllowedForAdminsAuthorizationGuard implements AuthorizationGuard {
 
     public AuthorizationResult guardInvocation(final MethodInvocation invocation,
                                                final Annotation annotation,
-                                               final UserRole callingRole,
-                                               final Key<? extends User> callingUser) {
+                                               final PrincipalRole callingRole,
+                                               final Key<? extends Principal> callingUser) {
         if (callingRole == null || !callingRole.isAdmin()) {
             return AuthorizationResult.failure("Administrator required");
         } else {

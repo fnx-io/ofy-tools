@@ -1,8 +1,8 @@
 package io.fnx.backend.tools.authorization;
 
 import com.googlecode.objectify.Key;
-import io.fnx.backend.tools.auth.User;
-import io.fnx.backend.tools.auth.UserRole;
+import io.fnx.backend.tools.auth.Principal;
+import io.fnx.backend.tools.auth.PrincipalRole;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 
@@ -34,20 +34,20 @@ import java.util.Collection;
  * </pre>
  *
  * @see AuthorizationGuard
- * @see User
+ * @see Principal
  */
 public class AuthorizationInterceptor implements MethodInterceptor {
 
-    private final Provider<User> principalProvider;
+    private final Provider<Principal> principalProvider;
     private AuthorizationGuard[] guards = new AuthorizationGuard[0];
 
-    public AuthorizationInterceptor(Provider<User> principalProvider) {
+    public AuthorizationInterceptor(Provider<Principal> principalProvider) {
         this.principalProvider = principalProvider;
     }
 
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {
-        final User principal = principalProvider.get();
+        final Principal principal = principalProvider.get();
         final AuthorizationResult result = runGuards(invocation, principal);
 
         if (result == null || result.success) {
@@ -57,13 +57,13 @@ public class AuthorizationInterceptor implements MethodInterceptor {
         }
     }
 
-    private AuthorizationResult runGuards(MethodInvocation invocation, User principal) {
+    private AuthorizationResult runGuards(MethodInvocation invocation, Principal principal) {
         AuthorizationResult result = null;
-        final Key<? extends User> callingUser;
-        final UserRole callingRole;
+        final Key<? extends Principal> callingUser;
+        final PrincipalRole callingRole;
 
         if (principal != null) {
-            callingUser = principal.getUserKey();
+            callingUser = principal.getPrincipalKey();
             callingRole = principal.getUserRole();
         } else {
             callingUser = null;

@@ -1,8 +1,8 @@
 package io.fnx.backend.tools.authorization;
 
 import com.googlecode.objectify.Key;
-import io.fnx.backend.tools.auth.User;
-import io.fnx.backend.tools.auth.UserRole;
+import io.fnx.backend.tools.auth.Principal;
+import io.fnx.backend.tools.auth.PrincipalRole;
 import org.aopalliance.intercept.MethodInvocation;
 
 import java.lang.annotation.Annotation;
@@ -29,6 +29,6 @@ public interface AuthorizationGuard {
 
     AuthorizationResult guardInvocation(MethodInvocation invocation,
                                         Annotation annotation,
-                                        UserRole callingRole,
-                                        Key<? extends User> callingUser);
+                                        PrincipalRole callingRole,
+                                        Key<? extends Principal> callingPrincipal);
 }

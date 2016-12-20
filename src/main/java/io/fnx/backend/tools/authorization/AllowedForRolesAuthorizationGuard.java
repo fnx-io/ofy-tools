@@ -1,8 +1,8 @@
 package io.fnx.backend.tools.authorization;
 
 import com.googlecode.objectify.Key;
-import io.fnx.backend.tools.auth.User;
-import io.fnx.backend.tools.auth.UserRole;
+import io.fnx.backend.tools.auth.Principal;
+import io.fnx.backend.tools.auth.PrincipalRole;
 import org.aopalliance.intercept.MethodInvocation;
 
 import java.lang.annotation.Annotation;
@@ -40,17 +40,17 @@ public abstract class AllowedForRolesAuthorizationGuard<T extends Annotation> im
     @Override
     public AuthorizationResult guardInvocation(MethodInvocation invocation,
                                                Annotation annotation,
-                                               UserRole callingRole,
-                                               Key<? extends User> callingUser) {
+                                               PrincipalRole callingRole,
+                                               Key<? extends Principal> callingUser) {
         if (annotation == null) return AuthorizationResult.SUCCESS;
 
         @SuppressWarnings("unchecked")
-        Collection<UserRole> roles = getRoles((T) annotation);
-        for (UserRole role : roles) {
+        Collection<PrincipalRole> roles = getRoles((T) annotation);
+        for (PrincipalRole role : roles) {
             if (Objects.equals(callingRole, role)) return AuthorizationResult.SUCCESS;
         }
         return AuthorizationResult.failure("Insufficient role");
     }
 
-    public abstract Collection<UserRole> getRoles(T annotation);
+    public abstract Collection<PrincipalRole> getRoles(T annotation);
 }
