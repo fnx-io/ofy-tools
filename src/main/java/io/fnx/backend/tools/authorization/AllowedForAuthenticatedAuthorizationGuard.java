@@ -7,18 +7,23 @@ import org.aopalliance.intercept.MethodInvocation;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
-
-import static java.util.Collections.singletonList;
 
 public class AllowedForAuthenticatedAuthorizationGuard implements AuthorizationGuard {
 
-    private static List<? extends Class<? extends Annotation>> annotations = singletonList(AllowedForAuthenticated.class);
+    private final static List<Class<? extends Annotation>> annotations;
+
+    static {
+        final List<Class<? extends Annotation>> res = new LinkedList<>();
+        res.add(AllowedForAuthenticated.class);
+        annotations = Collections.unmodifiableList(res);
+    }
 
     @Override
-    @SuppressWarnings("unchecked")
     public Collection<Class<? extends Annotation>> getAnnotationClasses() {
-        return (Collection<Class<? extends Annotation>>) annotations;
+        return annotations;
     }
 
     @Override

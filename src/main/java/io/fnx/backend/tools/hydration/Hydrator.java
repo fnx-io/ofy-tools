@@ -43,7 +43,7 @@ public class Hydrator {
         if (target == null) return null;
         if (ctx == null) {
             @SuppressWarnings("unchecked")
-            final H tmp = (H) new HydrationContext<>(null);
+            final H tmp = (H) new HydrationContext<ID, U, C>(null);
             ctx = tmp;
         }
 
@@ -88,7 +88,7 @@ public class Hydrator {
         if (toHydrate == null) return new LinkedList<>();
         if (ctx == null) {
             @SuppressWarnings("unchecked")
-            final H tmp = (H) new HydrationContext<>(null);
+            final H tmp = (H) new HydrationContext<ID, U, C>(null);
             ctx = tmp;
         }
         final List<T> result = new LinkedList<>();
