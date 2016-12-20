@@ -1,6 +1,5 @@
 package io.fnx.backend.tools.authorization;
 
-import io.fnx.backend.tools.auth.UserContext;
 import io.fnx.backend.tools.auth.UserRole;
 
 import java.lang.annotation.ElementType;
@@ -13,7 +12,6 @@ import java.lang.annotation.Target;
  *
  * @see AllowedForAdminsOnlyAuthorizationGuard
  * @see UserRole
- * @see UserContext
  */
 @Retention(RetentionPolicy.RUNTIME) @Target({ElementType.METHOD})
 public @interface AllowedForAdminsOnly {

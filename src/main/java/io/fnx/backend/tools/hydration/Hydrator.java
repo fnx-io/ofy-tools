@@ -1,15 +1,13 @@
 package io.fnx.backend.tools.hydration;
 
 import com.googlecode.objectify.Key;
-import io.fnx.backend.tools.auth.User;
-import io.fnx.backend.tools.auth.UserContext;
 import io.fnx.backend.tools.ofy.OfyProvider;
 
 import javax.inject.Inject;
 import java.util.*;
 
 /**
- * Created by Jiri Zuna on 12/12/2016.
+ *
  */
 public class Hydrator {
     private final OfyProvider ofyProvider;
@@ -22,22 +20,16 @@ public class Hydrator {
     /**
      * Hydrate using the recipe.
      * Will collect keys, load appropriate entities and then populate respective properties
+     *
      * @param recipe entity to hydrate
      * @param ctx context to take in account when populating properties
      * @param <T> type of the entity to be hydrated
-     * @param <ID> type of the ID of the principal entity
-     * @param <U> type of the user representing the principal
-     * @param <C> type of the context holding currently authenticated user
-     * @param <H> type of the hydration context binding together currently authenticated user and useful info needed by
-     *           custom hydration recipes
+     * @param <HC> type of the hydration context binding together currently authenticated user and useful info needed by
+     *            custom hydration recipes
+     *
      * @return hydrated entity
      */
-    public <T,
-            ID,
-            U extends User<ID>,
-            C extends UserContext<ID, U>,
-            H extends HydrationContext<ID, U, C>>
-    T hydrate(final HydrationRecipe<ID, U, C, H, T> recipe, H ctx) {
+    public <T, HC extends HydrationContext> T hydrate(HydrationRecipe<T, HC> recipe, HC ctx) {
         if (recipe == null) return null;
         final T target = recipe.transformForApi(ctx);
         if (target == null) return null;
@@ -56,13 +48,7 @@ public class Hydrator {
     /**
      * @see #hydrate(HydrationRecipe, HydrationContext)
      */
-    public <T,
-            ID,
-            U extends User<ID>,
-            C extends UserContext<ID, U>,
-            H extends HydrationContext<ID, U, C>,
-            CBH extends CanBeHydrated<ID, U, C, H, T>>
-    T hydrate(final CBH canBeHydrated, final H ctx) {
+    public <T, HC extends HydrationContext, CBH extends CanBeHydrated<T, HC>> T hydrate(CBH canBeHydrated, HC ctx) {
         if (canBeHydrated == null) return null;
         return hydrate(canBeHydrated.getRecipe(), ctx);
     }
@@ -71,25 +57,23 @@ public class Hydrator {
      * Hydrate collection of entities according to hydration recipes.
      * Each item in the collection should be handled as if hydrated with {@link #hydrate(HydrationRecipe, HydrationContext)}.
      * The difference here is, that keys get fetched at a single point in time for all given recipes.
+     *
      * @param toHydrate the collection to hydrate
      * @param ctx context to take in account when populating properties
      * @param <T> type of the entity to be hydrated
-     * @param <ID> type of the ID of the principal entity
-     * @param <U> type of the user representing the principal
-     * @param <C> type of the context holding currently authenticated user
-     * @param <H> type of the hydration context binding together currently authenticated user and useful info needed by
+     * @param <HC> type of the hydration context binding together currently authenticated user and useful info needed by
      *           custom hydration recipes
+     *
      * @return list containing hydrated entities
      */
-    public <T, ID, U extends User<ID>, C extends UserContext<ID, U>, H extends HydrationContext<ID, U, C>> List<T> hydrateCol(
-            final Collection<HydrationRecipe<ID, U, C, H, T>> toHydrate, H ctx) {
+    public <T, HC extends HydrationContext> List<T> hydrateCol(Collection<HydrationRecipe<T, HC>> toHydrate, HC ctx) {
         if (toHydrate == null) return new LinkedList<>();
         if (ctx == null) {
             throw new NullPointerException("Hydration context must not be null!");
         }
         final List<T> result = new LinkedList<>();
         final List<Hydration<T>> hydrations = new LinkedList<>();
-        for (HydrationRecipe<ID, U, C, H, T> t : toHydrate) {
+        for (HydrationRecipe<T, HC> t : toHydrate) {
             if (t == null) continue;
             final T target = t.transformForApi(ctx);
             if (target == null) continue;
@@ -104,12 +88,11 @@ public class Hydrator {
     /**
      * @see #hydrateCol(Collection, HydrationContext)
      */
-    public <T, ID, U extends User<ID>, C extends UserContext<ID, U>, H extends HydrationContext<ID, U, C>> List<T> hydrate(
-            final Collection<? extends CanBeHydrated<ID, U, C, H, T>> canBeHydrated, final H ctx) {
+    public <T, HC extends HydrationContext> List<T> hydrate(Collection<? extends CanBeHydrated<T, HC>> canBeHydrated, HC ctx) {
         if (canBeHydrated == null) return null;
-        final Collection<HydrationRecipe<ID, U, C, H, T>> recipes = new LinkedList<>();
-        for (CanBeHydrated<ID, U, C, H, T> toHydrate : canBeHydrated) {
-            final HydrationRecipe<ID, U, C, H, T> recipe;
+        final Collection<HydrationRecipe<T, HC>> recipes = new LinkedList<>();
+        for (CanBeHydrated<T, HC> toHydrate : canBeHydrated) {
+            final HydrationRecipe<T, HC> recipe;
             if (toHydrate == null) {
                 recipe = null;
             } else {
@@ -148,7 +131,6 @@ public class Hydrator {
         return result;
     }
 
-    @SuppressWarnings("unchecked")
     public static <T> void setProps(List<Hydration<T>> hydrations, Map<Key<Object>, Object> entityMap) {
         for (Hydration<T> e : hydrations) {
             e.hydrate(entityMap);

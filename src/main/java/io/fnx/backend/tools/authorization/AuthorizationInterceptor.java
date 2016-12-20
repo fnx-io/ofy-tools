@@ -2,12 +2,10 @@ package io.fnx.backend.tools.authorization;
 
 import com.googlecode.objectify.Key;
 import io.fnx.backend.tools.auth.User;
-import io.fnx.backend.tools.auth.UserContext;
 import io.fnx.backend.tools.auth.UserRole;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 
-import javax.inject.Inject;
 import javax.inject.Provider;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
@@ -36,18 +34,21 @@ import java.util.Collection;
  * </pre>
  *
  * @see AuthorizationGuard
- * @see UserContext
  * @see User
  */
 public class AuthorizationInterceptor implements MethodInterceptor {
 
-    private Provider<UserContext> userCtxProvider;
+    private final Provider<User> principalProvider;
     private AuthorizationGuard[] guards = new AuthorizationGuard[0];
+
+    public AuthorizationInterceptor(Provider<User> principalProvider) {
+        this.principalProvider = principalProvider;
+    }
 
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {
-        final UserContext context = userCtxProvider.get();
-        final AuthorizationResult result = runGuards(invocation, context);
+        final User principal = principalProvider.get();
+        final AuthorizationResult result = runGuards(invocation, principal);
 
         if (result == null || result.success) {
             return invocation.proceed();
@@ -56,10 +57,18 @@ public class AuthorizationInterceptor implements MethodInterceptor {
         }
     }
 
-    private AuthorizationResult runGuards(MethodInvocation invocation, UserContext context) {
+    private AuthorizationResult runGuards(MethodInvocation invocation, User principal) {
         AuthorizationResult result = null;
-        final Key<? extends User> callingUser = context.getUserKey();
-        final UserRole callingRole = context.getUserRole();
+        final Key<? extends User> callingUser;
+        final UserRole callingRole;
+
+        if (principal != null) {
+            callingUser = principal.getUserKey();
+            callingRole = principal.getUserRole();
+        } else {
+            callingUser = null;
+            callingRole = null;
+        }
 
         for (final AuthorizationGuard guard : guards) {
             // skip if the guard is non-definitive and authorization had already been successful
@@ -83,11 +92,6 @@ public class AuthorizationInterceptor implements MethodInterceptor {
             }
         }
         return result;
-    }
-
-    @Inject
-    public void setUserCtxProvider(Provider<UserContext> userCtxProvider) {
-        this.userCtxProvider = userCtxProvider;
     }
 
     public void setGuards(AuthorizationGuard[] guards) {

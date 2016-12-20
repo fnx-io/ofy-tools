@@ -1,7 +1,5 @@
 package io.fnx.backend.tools.authorization;
 
-import io.fnx.backend.tools.auth.UserContext;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -17,7 +15,6 @@ import java.lang.annotation.Target;
  * @see OwnedEntity
  * @see IdHasOwner
  * @see KeyHasOwner
- * @see UserContext
  */
 @Retention(RetentionPolicy.RUNTIME) @Target({ElementType.METHOD})
 public @interface AllowedForOwner {

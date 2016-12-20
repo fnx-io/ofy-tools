@@ -1,6 +1,9 @@
 package io.fnx.backend.tools.auth;
 
-public interface User<ID> {
+import com.googlecode.objectify.Key;
 
-    ID getId();
+public interface User {
+
+    Key<? extends User> getUserKey();
+    UserRole getUserRole();
 }

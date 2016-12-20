@@ -1,14 +1,11 @@
 package io.fnx.backend.tools.hydration;
 
-import io.fnx.backend.tools.auth.User;
-import io.fnx.backend.tools.auth.UserContext;
-
 import java.util.Collection;
 
 /**
  * Recipe which describes hydration of single entity
  */
-public interface HydrationRecipe<ID, U extends User<ID>, C extends UserContext<ID, U>, HC extends HydrationContext<ID, U, C>, D> {
+public interface HydrationRecipe<D, HC extends HydrationContext> {
 
     /**
      * Hook for transforming the target entity.

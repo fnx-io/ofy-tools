@@ -2,7 +2,6 @@ package io.fnx.backend.tools.hydration;
 
 import com.googlecode.objectify.Key;
 import io.fnx.backend.tools.auth.User;
-import io.fnx.backend.tools.auth.UserContext;
 
 /**
  * Context each hydration can use to decide what should be returned.
@@ -12,23 +11,23 @@ import io.fnx.backend.tools.auth.UserContext;
  * Project should have more details for its owner than for a regular user, and {@link HydrationRecipe}
  * can take this into account.
  */
-public class HydrationContext<ID, U extends User<ID>, C extends UserContext<ID, U>> {
+public class HydrationContext {
 
-    protected C userCtx;
+    protected User principal;
 
-    public HydrationContext(C ctx) {
-        this.userCtx = ctx;
+    public HydrationContext(User principal) {
+        this.principal = principal;
     }
 
     public boolean isLogged() {
-        return userCtx != null && userCtx.getUserKey() != null;
+        return principal != null && principal.getUserKey() != null;
     }
 
-    public Key<U> getUserKey() {
-        if (userCtx == null) {
+    public Key<? extends User> getUserKey() {
+        if (principal == null) {
             return null;
         } else {
-            return userCtx.getUserKey();
+            return principal.getUserKey();
         }
     }
 }
