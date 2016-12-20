@@ -42,9 +42,7 @@ public class Hydrator {
         final T target = recipe.transformForApi(ctx);
         if (target == null) return null;
         if (ctx == null) {
-            @SuppressWarnings("unchecked")
-            final H tmp = (H) new HydrationContext<ID, U, C>(null);
-            ctx = tmp;
+            throw new NullPointerException("Hydration context must not be null!");
         }
 
         final Collection<HydratedProperty<T, ?>> props = recipe.propsToHydrate(ctx);
@@ -87,9 +85,7 @@ public class Hydrator {
             final Collection<HydrationRecipe<ID, U, C, H, T>> toHydrate, H ctx) {
         if (toHydrate == null) return new LinkedList<>();
         if (ctx == null) {
-            @SuppressWarnings("unchecked")
-            final H tmp = (H) new HydrationContext<ID, U, C>(null);
-            ctx = tmp;
+            throw new NullPointerException("Hydration context must not be null!");
         }
         final List<T> result = new LinkedList<>();
         final List<Hydration<T>> hydrations = new LinkedList<>();
