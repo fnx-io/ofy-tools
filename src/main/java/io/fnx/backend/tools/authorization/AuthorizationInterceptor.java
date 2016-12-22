@@ -11,7 +11,7 @@ import java.lang.annotation.Annotation;
 import java.util.Collection;
 
 /**
- * Main class which should be configured to intercept calls to methods you care about (service methods?) and
+ * Main class which should be configured to intercept calls to methods you care about (manager methods?) and
  * you want it to check for authorization of these calls.
  *
  * It has simple (plugin) architecture, in that it consists of sets of {@link AuthorizationGuard}s which react to
@@ -29,7 +29,7 @@ import java.util.Collection;
  *     // select your own set of guards
  *     fnxAuthorizationInterceptor.setGuards(createAuthorizationGuards());
  *     requestInjection(fnxAuthorizationInterceptor);
- *     // intercept calls to service methods and check the authorization of these calls
+ *     // intercept calls to manager methods and check the authorization of these calls
  *     bindInterceptor(Matchers.subclassesOf(Service.class), Matchers.any(), fnxAuthorizationInterceptor);
  * </pre>
  *

@@ -6,6 +6,7 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.googlecode.objectify.Key;
+import com.googlecode.objectify.Objectify;
 import com.googlecode.objectify.Ref;
 
 import java.util.ArrayList;
@@ -202,5 +203,16 @@ public class OfyUtils {
                 return refToKey(ref);
             }
         };
+    }
+
+    /**
+     * Asserts that Objectify has started a transaction
+     *
+     * @param ofy Objectify
+     * @throws IllegalStateException when called outside transaction
+     */
+    public static void assertTransaction(Objectify ofy) {
+        if (ofy.getTransaction() == null) throw new IllegalStateException("No transaction");
+        if (!ofy.getTransaction().isActive()) throw new IllegalStateException("Transaction is not active!");
     }
 }
