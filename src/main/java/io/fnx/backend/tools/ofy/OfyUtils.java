@@ -8,6 +8,9 @@ import com.google.common.collect.Lists;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Objectify;
 import com.googlecode.objectify.Ref;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -214,5 +217,28 @@ public class OfyUtils {
     public static void assertTransaction(Objectify ofy) {
         if (ofy.getTransaction() == null) throw new IllegalStateException("No transaction");
         if (!ofy.getTransaction().isActive()) throw new IllegalStateException("Transaction is not active!");
+    }
+
+    /**
+     * Returns list consisting of string formatted dates between given 2 dates.
+     * The index will always include the starting and ending date. The dates are formatted as <code>yyyyMMdd</code>.
+     * Returns empty index, if one of the dates is null or ending date is before starting date.
+     * @param start starting date to count index from
+     * @param end ending date to count index to
+     * @return date index for all days between given 2 dates
+     */
+    public static List<String> indexPeriodDays(final DateTime start, final DateTime end) {
+        if (start == null || end == null || start.isAfter(end)) return Lists.newArrayList();
+        final DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyyMMdd");
+        final ArrayList<String> result = Lists.newArrayList();
+        final DateTime truncatedStart = start.withHourOfDay(0).withMinuteOfHour(0).withSecondOfMinute(0).withMillisOfSecond(0);
+        final DateTime truncatedEnd = end.withHourOfDay(0).withMinuteOfHour(0).withSecondOfMinute(0).withMillisOfSecond(0);
+        DateTime current = truncatedStart;
+        while (current.isBefore(truncatedEnd)) {
+            result.add(current.toString(formatter));
+            current = current.plusDays(1);
+        }
+        result.add(truncatedEnd.toString(formatter));
+        return result;
     }
 }
