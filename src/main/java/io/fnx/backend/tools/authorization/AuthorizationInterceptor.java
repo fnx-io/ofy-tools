@@ -47,8 +47,7 @@ public class AuthorizationInterceptor implements MethodInterceptor {
 
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {
-        final Principal principal = principalProvider.get();
-        final AuthorizationResult result = runGuards(invocation, principal);
+        final AuthorizationResult result = runGuards(invocation);
 
         if (result == null || result.success) {
             return invocation.proceed();
@@ -57,18 +56,8 @@ public class AuthorizationInterceptor implements MethodInterceptor {
         }
     }
 
-    private AuthorizationResult runGuards(MethodInvocation invocation, Principal principal) {
+    private AuthorizationResult runGuards(MethodInvocation invocation) {
         AuthorizationResult result = null;
-        final Key<? extends Principal> callingUser;
-        final PrincipalRole callingRole;
-
-        if (principal != null) {
-            callingUser = principal.getPrincipalKey();
-            callingRole = principal.getUserRole();
-        } else {
-            callingUser = null;
-            callingRole = null;
-        }
 
         for (final AuthorizationGuard guard : guards) {
             // skip if the guard is non-definitive and authorization had already been successful
@@ -79,6 +68,16 @@ public class AuthorizationInterceptor implements MethodInterceptor {
                 if (annotationClass == null) continue;
                 final Annotation annotation = invocation.getMethod().getAnnotation(annotationClass);
                 if (annotation != null) {
+                    final Principal principal = principalProvider.get();
+                    final Key<? extends Principal> callingUser;
+                    final PrincipalRole callingRole;
+                    if (principal != null) {
+                        callingUser = principal.getPrincipalKey();
+                        callingRole = principal.getUserRole();
+                    } else {
+                        callingUser = null;
+                        callingRole = null;
+                    }
                     final AuthorizationResult inspectionResult = guard.guardInvocation(invocation, annotation, callingRole, callingUser);
                     if (result == null) { // seed authorization outcome from the first result
                         result = inspectionResult;
