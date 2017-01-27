@@ -24,3 +24,18 @@
     </repository>
 </repositories>
 ```
+
+## Howto
+
+TODO
+
+### Unique constraint
+
+### Authentication
+
+### Permissions / Authorization
+
+### Hydration
+
+### Random
+
