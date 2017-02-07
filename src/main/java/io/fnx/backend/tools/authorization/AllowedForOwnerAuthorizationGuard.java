@@ -39,11 +39,6 @@ public class AllowedForOwnerAuthorizationGuard implements AuthorizationGuard {
     }
 
     @Override
-    public boolean isDefinitive() {
-        return false;
-    }
-
-    @Override
     @SuppressWarnings("unchecked")
     public AuthorizationResult guardInvocation( MethodInvocation invocation,
                                                 Annotation annotation,

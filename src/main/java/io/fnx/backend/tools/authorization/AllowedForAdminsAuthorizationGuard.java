@@ -13,10 +13,6 @@ import java.util.List;
 
 /**
  * This guard validates, that calling user has Admin role.
- *
- * It is a non-definitive guard.
- *
- * @see AuthorizationGuard#isDefinitive()
  */
 public class AllowedForAdminsAuthorizationGuard implements AuthorizationGuard {
 
@@ -31,11 +27,6 @@ public class AllowedForAdminsAuthorizationGuard implements AuthorizationGuard {
     @SuppressWarnings("unchecked")
     public Collection<Class<? extends Annotation>> getAnnotationClasses() {
         return annotations;
-    }
-
-    @Override
-    public boolean isDefinitive() {
-        return false;
     }
 
     public AuthorizationResult guardInvocation(final MethodInvocation invocation,

@@ -27,11 +27,6 @@ public class AllowedForAuthenticatedAuthorizationGuard implements AuthorizationG
     }
 
     @Override
-    public boolean isDefinitive() {
-        return false;
-    }
-
-    @Override
     public AuthorizationResult guardInvocation(final MethodInvocation invocation,
                                                     final Annotation annotation,
                                                     final PrincipalRole callingRole,

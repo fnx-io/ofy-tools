@@ -33,11 +33,6 @@ public abstract class AllowedForRolesAuthorizationGuard<T extends Annotation> im
     }
 
     @Override
-    public boolean isDefinitive() {
-        return false;
-    }
-
-    @Override
     public AuthorizationResult guardInvocation(MethodInvocation invocation,
                                                Annotation annotation,
                                                PrincipalRole callingRole,

@@ -60,8 +60,8 @@ public class AuthorizationInterceptor implements MethodInterceptor {
         AuthorizationResult result = null;
 
         for (final AuthorizationGuard guard : guards) {
-            // skip if the guard is non-definitive and authorization had already been successful
-            if (!guard.isDefinitive() && result != null && result.success) continue;
+            // skip if authorization had already been successful
+            if (result != null && result.success) continue;
             final Collection<Class<? extends Annotation>> annotationClasses = guard.getAnnotationClasses();
             if (annotationClasses == null) continue;
             for (Class<? extends Annotation> annotationClass : annotationClasses) {
@@ -84,8 +84,6 @@ public class AuthorizationInterceptor implements MethodInterceptor {
                     } else if (inspectionResult != null && inspectionResult.success) { // allow the total outcome to be changed to success
                         result = inspectionResult;                                     // so when first authorization guard suggests failure
                                                                                        // other guards might allow the call (they are additive)
-                    } else if (inspectionResult != null && !inspectionResult.success && guard.isDefinitive()) { // definitive guards must succeed every time
-                        return result;
                     }
                 }
             }
