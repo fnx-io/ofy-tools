@@ -1,6 +1,7 @@
 package io.fnx.backend.tools.hydration;
 
-public interface CanBeHydrated<D, HC extends HydrationContext> {
+public interface CanBeHydrated <ENTITY, HC extends HydrationContext> {
 
-    HydrationRecipe<D, HC> getRecipe();
+    HydrationRecipe<ENTITY, HC> getRecipe();
+
 }

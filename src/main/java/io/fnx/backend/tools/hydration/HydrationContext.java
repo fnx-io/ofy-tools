@@ -8,10 +8,16 @@ import io.fnx.backend.tools.auth.Principal;
  *
  * Some hydration should finish differently based on the authorization status
  * of currently logged user.
+ * 
  * Project should have more details for its owner than for a regular user, and {@link HydrationRecipe}
  * can take this into account.
+ *
+ * fnx note: It's possible, even recommended, to descent CallContext from HydrationContext.
  */
-public class HydrationContext {
+public interface HydrationContext {
+
+}
+/*
 
     protected Principal principal;
 
@@ -31,3 +37,4 @@ public class HydrationContext {
         }
     }
 }
+*/

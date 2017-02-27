@@ -7,211 +7,145 @@ import javax.inject.Inject;
 import java.util.*;
 
 /**
+ * Hydrator is a two phase mechanism to decorate (or strip) entities you want to deliver view REST API (or so).
+ *
+ * In the first phase, hydrator collects all datastore keys which are needed for decoration (a.k.a. hydration).
+ *
+ * Then it fetches all requested entities, and fetched objects are used for hydration of original objects.
+ *
+ * Example: An article has a Key<Author> and you want to deliver information about that article with
+ * the information about it's author.
+ *
+ * You can (and should) use hydration mechanism to remove sensitive data from outgoing entities.
  *
  */
 public class Hydrator {
-    private final OfyProvider ofyProvider;
+
+	private final OfyProvider ofyProvider;
 
     @Inject
     public Hydrator(OfyProvider ofyProvider) {
         this.ofyProvider = ofyProvider;
     }
 
-    /**
-     * Hydrate using the recipe.
-     * Will collect keys, load appropriate entities and then populate respective properties
-     *
-     * @param recipe entity to hydrate
-     * @param ctx context to take in account when populating properties
-     * @param <T> type of the entity to be hydrated
-     * @param <HC> type of the hydration context binding together currently authenticated user and useful info needed by
-     *            custom hydration recipes
-     *
-     * @return hydrated entity
-     */
-    public <T, HC extends HydrationContext> T hydrate(HydrationRecipe<T, HC> recipe, HC ctx) {
-        if (recipe == null) return null;
-        final T target = recipe.transformForApi(ctx);
-        if (target == null) return null;
-        if (ctx == null) {
-            throw new NullPointerException("Hydration context must not be null!");
-        }
+	/**
+	 * Use to hydrate entity, which is not CanBeHydrated itself.
+	 *
+	 * @param entity
+	 * @param recipe
+	 * @param ctx
+	 * @param <ENTITY>
+	 * @param <HC>
+	 * @return
+	 */
+	public <ENTITY, HC extends HydrationContext> void hydrateEntity(ENTITY entity, HydrationRecipe<ENTITY, HC> recipe, HC ctx) {
+		hydrateCollection(Collections.singleton(entity), recipe, ctx);
+	}
 
-        final Collection<HydratedProperty<T, ?>> props = recipe.propsToHydrate(ctx);
-        if (props == null) return target;
-        final List<Hydration<T>> hydrations = collectKeys(target, props);
+	/**
+	 * Use to hydrate entity, which is CanBeHydrated and provides it's own recipe.
+	 *
+	 * @param entity
+	 * @param ctx
+	 * @param <ENTITY>
+	 * @param <HC>
+	 */
+	public <ENTITY extends CanBeHydrated<ENTITY, HC>, HC extends HydrationContext> void hydrateEntity(ENTITY entity, HC ctx) {
+		hydrateCollection(Collections.singleton(entity), entity.getRecipe(), ctx);
+	}
 
-        doHydration(hydrations);
-        return target;
-    }
+	/**
+	 * Generic entities with shared recipe.
+	 *
+	 * @param entities
+	 * @param recipe
+	 * @param ctx
+	 * @param <ENTITY>
+	 * @param <HC>
+	 */
+	public <ENTITY, HC extends HydrationContext> void hydrateCollection(Iterable<ENTITY> entities, HydrationRecipe<ENTITY, HC> recipe, HC ctx) {
 
-    /**
-     * @see #hydrate(HydrationRecipe, HydrationContext)
-     */
-    public <T, HC extends HydrationContext, CBH extends CanBeHydrated<T, HC>> T hydrate(CBH canBeHydrated, HC ctx) {
-        if (canBeHydrated == null) return null;
-        return hydrate(canBeHydrated.getRecipe(), ctx);
-    }
+		Set<Key<Object>> keysToFetch = new HashSet<>();
+		List<HydrationRecipeInstance<ENTITY, HC>> hydrationPlan = new ArrayList<>();
 
-    /**
-     * Hydrate collection of entities according to hydration recipes.
-     * Each item in the collection should be handled as if hydrated with {@link #hydrate(HydrationRecipe, HydrationContext)}.
-     * The difference here is, that keys get fetched at a single point in time for all given recipes.
-     *
-     * @param toHydrate the collection to hydrate
-     * @param ctx context to take in account when populating properties
-     * @param <T> type of the entity to be hydrated
-     * @param <HC> type of the hydration context binding together currently authenticated user and useful info needed by
-     *           custom hydration recipes
-     *
-     * @return list containing hydrated entities
-     */
-    public <T, HC extends HydrationContext> List<T> hydrateCol(Collection<HydrationRecipe<T, HC>> toHydrate, HC ctx) {
-        if (toHydrate == null) return new LinkedList<>();
-        if (ctx == null) {
-            throw new NullPointerException("Hydration context must not be null!");
-        }
-        final List<T> result = new LinkedList<>();
-        final List<Hydration<T>> hydrations = new LinkedList<>();
-        for (HydrationRecipe<T, HC> t : toHydrate) {
-            if (t == null) continue;
-            final T target = t.transformForApi(ctx);
-            if (target == null) continue;
-            result.add(target);
-            final Collection<HydratedProperty<T, ?>> props = t.propsToHydrate(ctx);
-            hydrations.addAll(collectKeys(target, props));
-        }
-        doHydration(hydrations);
-        return result;
-    }
+		// first iteration - collect keys
+		for (ENTITY entity : entities) {
+			List<HydrationRecipeStep<ENTITY, HC>> steps = recipe.buildSteps(entity, ctx);
+			HydrationRecipeInstance<ENTITY, HC> hydrationPlanStep = new HydrationRecipeInstance(entity, steps);
+			hydrationPlan.add(hydrationPlanStep);
 
-    /**
-     * @see #hydrateCol(Collection, HydrationContext)
-     */
-    public <T, HC extends HydrationContext> List<T> hydrate(Collection<? extends CanBeHydrated<T, HC>> canBeHydrated, HC ctx) {
-        if (canBeHydrated == null) return null;
-        final Collection<HydrationRecipe<T, HC>> recipes = new LinkedList<>();
-        for (CanBeHydrated<T, HC> toHydrate : canBeHydrated) {
-            final HydrationRecipe<T, HC> recipe;
-            if (toHydrate == null) {
-                recipe = null;
-            } else {
-                recipe = toHydrate.getRecipe();
-            }
-            recipes.add(recipe);
-        }
-        return hydrateCol(recipes, ctx);
-    }
+			for (HydrationRecipeStep<ENTITY, HC> step : hydrationPlanStep.getSteps()) {
+				for (Key<?> key : step.getDependencies(entity, ctx)) {
+					keysToFetch.add((Key<Object>) key);
+				}
+			}
+		}
 
-    private <T> void doHydration(List<Hydration<T>> hydrations) {
-        final Set<Key<Object>> keys = new HashSet<>(500);
+		// ... and execute
+		executeHydration(hydrationPlan, ctx, keysToFetch);
+	}
 
-        for (Hydration<T> hydration : hydrations) {
-            hydration.addKeysTo(keys);
-        }
-        // batch load all keys
-        final Map<Key<Object>, Object> entityMap = ofyProvider.get().load().keys(keys);
+	/**
+	 * Each entity is CanBeHydrated and creates it's own recipe.
+	 *
+	 * @param entities
+	 * @param ctx
+	 * @param <ENTITY>
+	 * @param <HC>
+	 */
+	public <ENTITY extends CanBeHydrated<ENTITY, HC>, HC extends HydrationContext> void hydrateCollection(Iterable<ENTITY> entities, HC ctx) {
 
-        setProps(hydrations, entityMap);
-    }
+		Set<Key<Object>> keysToFetch = new HashSet<>();
+		List<HydrationRecipeInstance<ENTITY, HC>> hydrationPlan = new ArrayList<>();
 
-    @SuppressWarnings("unchecked")
-    private static <T> List<Hydration<T>> collectKeys(T target, Collection<HydratedProperty<T, ?>> props) {
-        if (props == null) return new LinkedList<>();
-        final List<Hydration<T>> result = new LinkedList<>();
-        for (HydratedProperty<T, ?> prop : props) {
-            if (prop instanceof SingleValueHydratedProperty) {
-                final SingleValueHydratedProperty<T, Object> singleProp = (SingleValueHydratedProperty<T, Object>) prop;
-                result.add(new SingleValueHydration<>(target, singleProp));
-            } else if (prop instanceof CollectionHydratedProperty) {
-                final CollectionHydratedProperty<T, Object> colProp = (CollectionHydratedProperty<T, Object>) prop;
-                result.add(new CollectionHydration<>(target, colProp));
-            }
-        }
-        return result;
-    }
+		// first iteration - collect keys
+		for (ENTITY entity : entities) {
+			HydrationRecipe<ENTITY, HC> recipe = entity.getRecipe();
+			List<HydrationRecipeStep<ENTITY, HC>> steps = recipe.buildSteps(entity, ctx);
+			HydrationRecipeInstance<ENTITY, HC> hydrationPlanStep = new HydrationRecipeInstance(entity, steps);
+			hydrationPlan.add(hydrationPlanStep);
 
-    public static <T> void setProps(List<Hydration<T>> hydrations, Map<Key<Object>, Object> entityMap) {
-        for (Hydration<T> e : hydrations) {
-            e.hydrate(entityMap);
-        }
-    }
+			for (HydrationRecipeStep<ENTITY, HC> step : hydrationPlanStep.getSteps()) {
+				for (Key<?> key : step.getDependencies(entity, ctx)) {
+					keysToFetch.add((Key<Object>) key);
+				}
+			}
+		}
 
-    public static abstract class Hydration<T> {
-        public final T target;
+		// ... and execute
+		executeHydration(hydrationPlan, ctx, keysToFetch);
+	}
 
-        protected Hydration(T target) {
-            this.target = target;
-        }
+	private <ENTITY, HC extends HydrationContext> void executeHydration(List<HydrationRecipeInstance<ENTITY, HC>> hydrationPlan, HC ctx, Set<Key<Object>> keysToFetch) {
+		// now let's fetch all we need!
+		final Map<Key<Object>, Object> entityMap = ofyProvider.get().load().keys(keysToFetch);
 
-        public abstract void addKeysTo(Collection<Key<Object>> keys);
+		// second iteration - do your hydration you little steps!
+		for (HydrationRecipeInstance<ENTITY, HC> hydrationPlanStep : hydrationPlan) {
+			for (HydrationRecipeStep<ENTITY, HC> step: hydrationPlanStep.getSteps()) {
+				step.executeStep(hydrationPlanStep.getEntity(), ctx, entityMap);
+			}
+		}
+	}
 
-        public abstract void hydrate(Map<Key<Object>, Object> entityMap);
-    }
+	private static class HydrationRecipeInstance<ENTITY, HC extends HydrationContext> {
 
-    /**
-     * Holder of target entity and the handler for single property of the entity
-     * @param <T>
-     */
-    public static class SingleValueHydration<T> extends Hydration<T> {
+		private final ENTITY entity;
+		private final List<HydrationRecipeStep<ENTITY, HC>> steps;
 
-        public final SingleValueHydratedProperty<T, Object> prop;
-        private final Key<Object> key;
+		public HydrationRecipeInstance(ENTITY entity, List<HydrationRecipeStep<ENTITY, HC>> steps) {
+			this.entity = entity;
+			this.steps = steps;
+		}
 
-        public SingleValueHydration(T target, SingleValueHydratedProperty<T, Object> prop) {
-            super(target);
-            this.prop = prop;
-            this.key = prop.getKey(target);
-        }
+		public ENTITY getEntity() {
+			return entity;
+		}
 
-        @Override
-        public void addKeysTo(Collection<Key<Object>> keys) {
-            if (key != null) keys.add(key);
-        }
-
-        @Override
-        public void hydrate(Map<Key<Object>, Object> entityMap) {
-            final Object value = entityMap.get(key);
-            prop.setProperty(target, value);
-        }
-    }
-
-    public static class CollectionHydration<T> extends Hydration<T> {
-
-        public final CollectionHydratedProperty<T, Object> prop;
-        private final Collection<Key<Object>> keys;
-
-        public CollectionHydration(T target, CollectionHydratedProperty<T, Object> prop) {
-            super(target);
-            this.prop = prop;
-            this.keys = clearKeys(prop.getKeys(target));
-        }
-
-        private Collection<Key<Object>> clearKeys(Collection<Key<Object>> keys) {
-            if (keys == null) return new LinkedList<>();
-            LinkedList<Key<Object>> res = new LinkedList<>();
-            for (Key<Object> key : keys) {
-                if (key != null) res.add(key);
-            }
-            return res;
-        }
-
-        @Override
-        public void addKeysTo(Collection<Key<Object>> allKeys) {
-            allKeys.addAll(this.keys);
-        }
-
-        @Override
-        public void hydrate(final Map<Key<Object>, Object> entityMap) {
-            final List<Object> objects = new LinkedList<>();
-            for (Key<Object> key : keys) {
-                if (key == null) continue;
-                final Object val = entityMap.get(key);
-                if (val == null) continue;
-
-                objects.add(val);
-            }
-            prop.setProperty(target, objects);
-        }
-    }
+		public List<HydrationRecipeStep<ENTITY, HC>> getSteps() {
+			return steps;
+		}
+	}
+	
 }
+

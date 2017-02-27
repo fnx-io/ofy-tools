@@ -5,5 +5,7 @@ import com.googlecode.objectify.Key;
 public interface Principal {
 
     Key<? extends Principal> getPrincipalKey();
+
     PrincipalRole getUserRole();
+    
 }
