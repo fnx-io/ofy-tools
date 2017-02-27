@@ -23,10 +23,10 @@ public class Hydrator {
 
 	private final OfyProvider ofyProvider;
 
-    @Inject
-    public Hydrator(OfyProvider ofyProvider) {
-        this.ofyProvider = ofyProvider;
-    }
+	@Inject
+	public Hydrator(OfyProvider ofyProvider) {
+		this.ofyProvider = ofyProvider;
+	}
 
 	/**
 	 * Use to hydrate entity, which is not CanBeHydrated itself.
@@ -73,12 +73,7 @@ public class Hydrator {
 			List<HydrationRecipeStep<ENTITY, HC>> steps = recipe.buildSteps(entity, ctx);
 			HydrationRecipeInstance<ENTITY, HC> hydrationPlanStep = new HydrationRecipeInstance(entity, steps);
 			hydrationPlan.add(hydrationPlanStep);
-
-			for (HydrationRecipeStep<ENTITY, HC> step : hydrationPlanStep.getSteps()) {
-				for (Key<?> key : step.getDependencies(entity, ctx)) {
-					keysToFetch.add((Key<Object>) key);
-				}
-			}
+			fetchKeys(entity, ctx, hydrationPlanStep, keysToFetch);
 		}
 
 		// ... and execute
@@ -104,16 +99,22 @@ public class Hydrator {
 			List<HydrationRecipeStep<ENTITY, HC>> steps = recipe.buildSteps(entity, ctx);
 			HydrationRecipeInstance<ENTITY, HC> hydrationPlanStep = new HydrationRecipeInstance(entity, steps);
 			hydrationPlan.add(hydrationPlanStep);
-
-			for (HydrationRecipeStep<ENTITY, HC> step : hydrationPlanStep.getSteps()) {
-				for (Key<?> key : step.getDependencies(entity, ctx)) {
-					keysToFetch.add((Key<Object>) key);
-				}
-			}
+			fetchKeys(entity, ctx, hydrationPlanStep, keysToFetch);
 		}
 
 		// ... and execute
 		executeHydration(hydrationPlan, ctx, keysToFetch);
+	}
+
+	private <ENTITY, HC extends HydrationContext> void fetchKeys(ENTITY entity, HC ctx, HydrationRecipeInstance<ENTITY, HC> hydrationPlanStep, Set<Key<Object>> keysToFetch) {
+		for (HydrationRecipeStep<ENTITY, HC> step : hydrationPlanStep.getSteps()) {
+			Collection<Key<?>> deps = step.getDependencies(entity, ctx);
+			if (deps != null && !deps.isEmpty()) {
+				for (Key<?> key : deps) {
+					keysToFetch.add((Key<Object>) key);
+				}
+			}
+		}
 	}
 
 	private <ENTITY, HC extends HydrationContext> void executeHydration(List<HydrationRecipeInstance<ENTITY, HC>> hydrationPlan, HC ctx, Set<Key<Object>> keysToFetch) {
@@ -122,8 +123,10 @@ public class Hydrator {
 
 		// second iteration - do your hydration you little steps!
 		for (HydrationRecipeInstance<ENTITY, HC> hydrationPlanStep : hydrationPlan) {
-			for (HydrationRecipeStep<ENTITY, HC> step: hydrationPlanStep.getSteps()) {
-				step.executeStep(hydrationPlanStep.getEntity(), ctx, entityMap);
+			if (hydrationPlanStep.getSteps() != null) {
+				for (HydrationRecipeStep<ENTITY, HC> step : hydrationPlanStep.getSteps()) {
+					step.executeStep(hydrationPlanStep.getEntity(), ctx, entityMap);
+				}
 			}
 		}
 	}
@@ -146,6 +149,6 @@ public class Hydrator {
 			return steps;
 		}
 	}
-	
+
 }
 

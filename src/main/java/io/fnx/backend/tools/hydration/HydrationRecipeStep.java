@@ -27,7 +27,7 @@ public interface HydrationRecipeStep<ENTITY, HC extends HydrationContext> {
 	 * @param context
 	 * @return
 	 */
-    Collection<Key<? extends Object>> getDependencies(ENTITY entity, HC context);
+    Collection<Key<?>> getDependencies(ENTITY entity, HC context);
 
 	/**
 	 * Called by Hydrator after fetching all dependencies from all steps and recipes.
