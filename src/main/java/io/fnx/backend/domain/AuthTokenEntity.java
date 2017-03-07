@@ -1,10 +1,7 @@
 package io.fnx.backend.domain;
 
 import com.googlecode.objectify.Key;
-import com.googlecode.objectify.annotation.Cache;
-import com.googlecode.objectify.annotation.Entity;
-import com.googlecode.objectify.annotation.Id;
-import com.googlecode.objectify.annotation.Unindex;
+import com.googlecode.objectify.annotation.*;
 import io.fnx.backend.tools.auth.Principal;
 import io.fnx.backend.tools.authorization.OwnedEntity;
 import org.joda.time.DateTime;
@@ -19,8 +16,10 @@ public class AuthTokenEntity implements OwnedEntity<Principal> {
     @Id
     private String id;
 
+    @Index
     private DateTime lastTouch;
 
+    @Index
     private Key<? extends Principal> owner;
 
     public Key<AuthTokenEntity> createKey() {
