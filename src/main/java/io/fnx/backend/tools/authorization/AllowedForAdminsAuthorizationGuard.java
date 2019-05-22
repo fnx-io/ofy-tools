@@ -17,6 +17,7 @@ import java.util.List;
 public class AllowedForAdminsAuthorizationGuard implements AuthorizationGuard {
 
     private final static List<Class<? extends Annotation>> annotations;
+
     static {
         final List<Class<? extends Annotation>> res = new LinkedList<>();
         res.add(AllowedForAdmins.class);
@@ -29,14 +30,17 @@ public class AllowedForAdminsAuthorizationGuard implements AuthorizationGuard {
         return annotations;
     }
 
-    public AuthorizationResult guardInvocation(final MethodInvocation invocation,
-                                               final Annotation annotation,
-                                               final PrincipalRole callingRole,
-                                               final Key<? extends Principal> callingUser) {
-        if (callingRole == null || !callingRole.isAdmin()) {
-            return AuthorizationResult.failure("Administrator required");
-        } else {
-            return AuthorizationResult.SUCCESS;
-        }
+    @Override
+    public AuthorizationResult guardInvocation(MethodInvocation invocation, Annotation annotation, Principal principal) {
+        return isAdmin(principal)
+                ? AuthorizationResult.SUCCESS
+                : AuthorizationResult.failure("Administrator required");
+    }
+
+    private boolean isAdmin(Principal principal) {
+        if (principal == null) return false;
+
+        List<PrincipalRole> roles = principal.getUserRoles();
+        return roles != null && roles.stream().anyMatch(PrincipalRole::isAdmin);
     }
 }

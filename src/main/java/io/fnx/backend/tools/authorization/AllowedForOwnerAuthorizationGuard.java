@@ -2,7 +2,6 @@ package io.fnx.backend.tools.authorization;
 
 import com.googlecode.objectify.Key;
 import io.fnx.backend.tools.auth.Principal;
-import io.fnx.backend.tools.auth.PrincipalRole;
 import io.fnx.backend.tools.ofy.OfyProvider;
 import org.aopalliance.intercept.MethodInvocation;
 
@@ -40,14 +39,13 @@ public class AllowedForOwnerAuthorizationGuard implements AuthorizationGuard {
 
     @Override
     @SuppressWarnings("unchecked")
-    public AuthorizationResult guardInvocation( MethodInvocation invocation,
-                                                Annotation annotation,
-                                                PrincipalRole callingRole,
-                                                Key<? extends Principal> callingPrincipal) {
-        final AuthorizationResult failure = AuthorizationResult.failure("Insufficient rights to access resource.");
-        if (callingPrincipal == null) {
+    public AuthorizationResult guardInvocation(MethodInvocation invocation, Annotation annotation, Principal principal) {
+        final AuthorizationResult failure =
+                AuthorizationResult.failure("Insufficient rights to access resource for: " + invocation.getMethod());
+        if (principal == null) {
             return failure;
         }
+
         final Object[] args = invocation.getArguments();
         final Annotation[][] parameterAnnotations = invocation.getMethod().getParameterAnnotations();
         for (int i = 0; i < args.length; i++) {
@@ -58,7 +56,7 @@ public class AllowedForOwnerAuthorizationGuard implements AuthorizationGuard {
             final OwnedEntity owned;
             if (arg instanceof OwnedEntity) {
                 owned = (OwnedEntity) arg;
-            } else if (ownedId != null ) {
+            } else if (ownedId != null) {
                 final Key<? extends OwnedEntity<?>> ownedKey;
                 if (arg instanceof Long) {
                     ownedKey = idToKey(ownedId.value(), (Long) arg);
@@ -69,7 +67,7 @@ public class AllowedForOwnerAuthorizationGuard implements AuthorizationGuard {
                 }
                 owned = ofyProvider.get().load().key(ownedKey).now();
             } else if (paramOwnedKey != null) {
-                owned = ofyProvider.get().load().key((Key<? extends OwnedEntity<?>>)arg).now();
+                owned = ofyProvider.get().load().key((Key<? extends OwnedEntity<?>>) arg).now();
             } else {
                 continue;
             }
@@ -77,7 +75,7 @@ public class AllowedForOwnerAuthorizationGuard implements AuthorizationGuard {
             final Key ownerKey = owned.getOwnerKey();
             if (ownerKey == null) continue;
 
-            if (!callingPrincipal.equals(ownerKey)) return failure;
+            if (!ownerKey.equals(principal.getPrincipalKey())) return failure;
         }
         return AuthorizationResult.SUCCESS;
     }

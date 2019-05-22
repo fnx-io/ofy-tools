@@ -1,16 +1,19 @@
 package io.fnx.backend.tools.authorization;
 
-import com.googlecode.objectify.Key;
 import io.fnx.backend.tools.auth.Principal;
 import io.fnx.backend.tools.auth.PrincipalRole;
 import org.aopalliance.intercept.MethodInvocation;
 
 import java.lang.annotation.Annotation;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * This guard allows to implement role based authorization checks.
- *
+ * <p>
  * It does not prescribe any Annotations to be inspected, rather it will just delegate to
  * the implementation to extract allowed roles for a particular call.
  *
@@ -33,18 +36,20 @@ public abstract class AllowedForRolesAuthorizationGuard<T extends Annotation> im
     }
 
     @Override
-    public AuthorizationResult guardInvocation(MethodInvocation invocation,
-                                               Annotation annotation,
-                                               PrincipalRole callingRole,
-                                               Key<? extends Principal> callingUser) {
+    public AuthorizationResult guardInvocation(MethodInvocation invocation, Annotation annotation, Principal principal) {
         if (annotation == null) return AuthorizationResult.SUCCESS;
 
         @SuppressWarnings("unchecked")
         Collection<PrincipalRole> roles = getRoles((T) annotation);
-        for (PrincipalRole role : roles) {
-            if (Objects.equals(callingRole, role)) return AuthorizationResult.SUCCESS;
-        }
-        return AuthorizationResult.failure("Insufficient role");
+        List<PrincipalRole> userRoles = principal.getUserRoles();
+
+        return userRoles != null && userRoles.containsAll(roles)
+                ? AuthorizationResult.SUCCESS
+                : AuthorizationResult.failure("Insufficient roles for '" + invocation.getMethod() + "', needs: " + rolesToString(roles));
+    }
+
+    private String rolesToString(Collection<PrincipalRole> roles) {
+        return roles.stream().map(PrincipalRole::toString).collect(Collectors.joining(","));
     }
 
     public abstract Collection<PrincipalRole> getRoles(T annotation);

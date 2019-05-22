@@ -13,7 +13,7 @@ import java.util.Collection;
 /**
  * Main class which should be configured to intercept calls to methods you care about (manager methods?) and
  * you want it to check for authorization of these calls.
- *
+ * <p>
  * It has simple (plugin) architecture, in that it consists of sets of {@link AuthorizationGuard}s which react to
  * different annotations and different checks.
  * <br>
@@ -38,11 +38,17 @@ import java.util.Collection;
  */
 public class AuthorizationInterceptor implements MethodInterceptor {
 
+    private final boolean strict;
     private final Provider<Principal> principalProvider;
     private AuthorizationGuard[] guards = new AuthorizationGuard[0];
 
     public AuthorizationInterceptor(Provider<Principal> principalProvider) {
+        this(principalProvider, true);
+    }
+
+    public AuthorizationInterceptor(Provider<Principal> principalProvider, boolean strict) {
         this.principalProvider = principalProvider;
+        this.strict = strict;
     }
 
     @Override
@@ -58,36 +64,35 @@ public class AuthorizationInterceptor implements MethodInterceptor {
 
     private AuthorizationResult runGuards(MethodInvocation invocation) {
         AuthorizationResult result = null;
+        int guardInvocationCount = 0;
 
         for (final AuthorizationGuard guard : guards) {
             // skip if authorization had already been successful
             if (result != null && result.success) continue;
+
             final Collection<Class<? extends Annotation>> annotationClasses = guard.getAnnotationClasses();
             if (annotationClasses == null) continue;
             for (Class<? extends Annotation> annotationClass : annotationClasses) {
                 if (annotationClass == null) continue;
                 final Annotation annotation = invocation.getMethod().getAnnotation(annotationClass);
                 if (annotation != null) {
-                    final Principal principal = principalProvider.get();
-                    final Key<? extends Principal> callingUser;
-                    final PrincipalRole callingRole;
-                    if (principal != null) {
-                        callingUser = principal.getPrincipalKey();
-                        callingRole = principal.getUserRole();
-                    } else {
-                        callingUser = null;
-                        callingRole = null;
-                    }
-                    final AuthorizationResult inspectionResult = guard.guardInvocation(invocation, annotation, callingRole, callingUser);
+                    guardInvocationCount++;
+                    final AuthorizationResult inspectionResult = guard.guardInvocation(invocation, annotation, principalProvider.get());
                     if (result == null) { // seed authorization outcome from the first result
                         result = inspectionResult;
                     } else if (inspectionResult != null && inspectionResult.success) { // allow the total outcome to be changed to success
                         result = inspectionResult;                                     // so when first authorization guard suggests failure
-                                                                                       // other guards might allow the call (they are additive)
+                        // other guards might allow the call (they are additive)
                     }
                 }
             }
         }
+
+        if (strict && guardInvocationCount == 0) {
+            return AuthorizationResult.failure("No guard was set for method '" + invocation.getMethod()
+                    + "' , see @AllowedFor... annotations");
+        }
+
         return result;
     }
 

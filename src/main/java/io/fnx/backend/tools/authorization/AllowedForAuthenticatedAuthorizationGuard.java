@@ -1,6 +1,5 @@
 package io.fnx.backend.tools.authorization;
 
-import com.googlecode.objectify.Key;
 import io.fnx.backend.tools.auth.Principal;
 import io.fnx.backend.tools.auth.PrincipalRole;
 import org.aopalliance.intercept.MethodInvocation;
@@ -27,15 +26,16 @@ public class AllowedForAuthenticatedAuthorizationGuard implements AuthorizationG
     }
 
     @Override
-    public AuthorizationResult guardInvocation(final MethodInvocation invocation,
-                                                    final Annotation annotation,
-                                                    final PrincipalRole callingRole,
-                                                    final Key<? extends Principal> callingPrincipal) {
-        if (callingPrincipal == null || callingRole == null || callingRole.isAnonymous()) {
-            return AuthorizationResult.failure("Must authenticate.");
-        } else {
-            return AuthorizationResult.SUCCESS;
-        }
+    public AuthorizationResult guardInvocation(MethodInvocation invocation, Annotation annotation, Principal principal) {
+        return isAuthenticated(principal)
+                ? AuthorizationResult.SUCCESS
+                : AuthorizationResult.failure("Must authenticate: " + invocation.getMethod());
+    }
 
+    private boolean isAuthenticated(Principal principal) {
+        if (principal == null) return false;
+
+        List<PrincipalRole> roles = principal.getUserRoles();
+        return roles != null && roles.stream().anyMatch(PrincipalRole::isAuthenticated);
     }
 }
