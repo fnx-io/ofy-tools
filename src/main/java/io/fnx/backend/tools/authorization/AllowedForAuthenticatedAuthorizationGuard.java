@@ -29,13 +29,14 @@ public class AllowedForAuthenticatedAuthorizationGuard implements AuthorizationG
     public AuthorizationResult guardInvocation(MethodInvocation invocation, Annotation annotation, Principal principal) {
         return isAuthenticated(principal)
                 ? AuthorizationResult.SUCCESS
-                : AuthorizationResult.failure("Must authenticate: " + invocation.getMethod());
+                : AuthorizationResult.failure("User must be authenticated to call method " + invocation.getMethod()
+                + ", current roles: " + principalRolesToString(principal));
     }
 
     private boolean isAuthenticated(Principal principal) {
         if (principal == null) return false;
 
-        List<PrincipalRole> roles = principal.getUserRoles();
+        List<? extends PrincipalRole> roles = principal.getUserRoles();
         return roles != null && roles.stream().anyMatch(PrincipalRole::isAuthenticated);
     }
 }

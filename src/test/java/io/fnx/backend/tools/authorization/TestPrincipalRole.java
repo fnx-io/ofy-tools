@@ -5,7 +5,8 @@ import io.fnx.backend.tools.auth.PrincipalRole;
 public enum TestPrincipalRole implements PrincipalRole {
 
     ADMIN,
-    USER,
+    BACKEND_USER,
+    FRONTEND_USER,
     ANONYMOUS;
 
     @Override

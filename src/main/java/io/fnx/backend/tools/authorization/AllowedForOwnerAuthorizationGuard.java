@@ -41,7 +41,8 @@ public class AllowedForOwnerAuthorizationGuard implements AuthorizationGuard {
     @SuppressWarnings("unchecked")
     public AuthorizationResult guardInvocation(MethodInvocation invocation, Annotation annotation, Principal principal) {
         final AuthorizationResult failure =
-                AuthorizationResult.failure("Insufficient rights to access resource for: " + invocation.getMethod());
+                AuthorizationResult.failure("Insufficient rights to access method " + invocation.getMethod()
+                        + ", user roles: " + principalRolesToString(principal));
         if (principal == null) {
             return failure;
         }

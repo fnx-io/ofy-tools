@@ -9,7 +9,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * This guard allows to implement role based authorization checks.
@@ -41,15 +40,12 @@ public abstract class AllowedForRolesAuthorizationGuard<T extends Annotation> im
 
         @SuppressWarnings("unchecked")
         Collection<PrincipalRole> roles = getRoles((T) annotation);
-        List<PrincipalRole> userRoles = principal.getUserRoles();
+        List<? extends PrincipalRole> userRoles = principal.getUserRoles();
 
-        return userRoles != null && userRoles.containsAll(roles)
+        return userRoles != null && !Collections.disjoint(roles, userRoles)
                 ? AuthorizationResult.SUCCESS
-                : AuthorizationResult.failure("Insufficient roles for '" + invocation.getMethod() + "', needs: " + rolesToString(roles));
-    }
-
-    private String rolesToString(Collection<PrincipalRole> roles) {
-        return roles.stream().map(PrincipalRole::toString).collect(Collectors.joining(","));
+                : AuthorizationResult.failure("User has insufficient roles " + principalRolesToString(principal)
+                + ", needs: " + rolesToString(roles) + " to call " + invocation.getMethod());
     }
 
     public abstract Collection<PrincipalRole> getRoles(T annotation);

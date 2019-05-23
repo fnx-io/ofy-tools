@@ -1,6 +1,5 @@
 package io.fnx.backend.tools.authorization;
 
-import com.googlecode.objectify.Key;
 import io.fnx.backend.tools.auth.Principal;
 import io.fnx.backend.tools.auth.PrincipalRole;
 import org.aopalliance.intercept.MethodInvocation;
@@ -34,13 +33,14 @@ public class AllowedForAdminsAuthorizationGuard implements AuthorizationGuard {
     public AuthorizationResult guardInvocation(MethodInvocation invocation, Annotation annotation, Principal principal) {
         return isAdmin(principal)
                 ? AuthorizationResult.SUCCESS
-                : AuthorizationResult.failure("Administrator required");
+                : AuthorizationResult.failure("Administrator role required for user to call method " + invocation.getMethod()
+                + ", current roles: " + principalRolesToString(principal));
     }
 
     private boolean isAdmin(Principal principal) {
         if (principal == null) return false;
 
-        List<PrincipalRole> roles = principal.getUserRoles();
+        List<? extends PrincipalRole> roles = principal.getUserRoles();
         return roles != null && roles.stream().anyMatch(PrincipalRole::isAdmin);
     }
 }

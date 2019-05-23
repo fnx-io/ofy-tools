@@ -8,6 +8,6 @@ public interface Principal {
 
     Key<? extends Principal> getPrincipalKey();
 
-    List<PrincipalRole> getUserRoles();
+    List<? extends PrincipalRole> getUserRoles();
 
 }

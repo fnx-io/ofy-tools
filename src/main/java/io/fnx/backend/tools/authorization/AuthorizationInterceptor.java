@@ -89,8 +89,8 @@ public class AuthorizationInterceptor implements MethodInterceptor {
         }
 
         if (strict && guardInvocationCount == 0) {
-            return AuthorizationResult.failure("No guard was set for method '" + invocation.getMethod()
-                    + "' , see @AllowedFor... annotations");
+            return AuthorizationResult.failure("No guard was set for method " + invocation.getMethod()
+                    + ", see @AllowedFor... annotations");
         }
 
         return result;

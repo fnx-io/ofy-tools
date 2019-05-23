@@ -22,7 +22,7 @@ public class TestPrincipal implements Principal {
     @Index
     private String lastName;
 
-    private List<PrincipalRole> roles;
+    private List<? extends PrincipalRole> roles;
 
 
     @Override
@@ -31,7 +31,7 @@ public class TestPrincipal implements Principal {
     }
 
     @Override
-    public List<PrincipalRole> getUserRoles() {
+    public List<? extends PrincipalRole> getUserRoles() {
         return roles;
     }
 
@@ -67,11 +67,11 @@ public class TestPrincipal implements Principal {
         this.lastName = lastName;
     }
 
-    public List<PrincipalRole> getRoles() {
+    public List<? extends PrincipalRole> getRoles() {
         return roles;
     }
 
-    public void setRoles(List<PrincipalRole> roles) {
+    public void setRoles(List<? extends PrincipalRole> roles) {
         this.roles = roles;
     }
 }

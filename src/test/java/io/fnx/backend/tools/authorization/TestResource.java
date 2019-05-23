@@ -4,6 +4,12 @@ interface TestResource {
 
     void notAnnotated();
 
+    void allAllowed();
+
     void adminAllowed();
+
+    void authenticatedAllowed();
+
+    void backendFrontendUsersAllowed();
 
 }
