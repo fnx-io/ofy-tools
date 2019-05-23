@@ -8,6 +8,7 @@ import java.util.List;
 public interface HydrationRecipe<ENTITY, HC extends HydrationContext> {
 
     /**
+     * @param entity entity to hydrate
      * @param ctx hydration context to take into account when populating properties
      * @return Collection of properties to hydrate
      */

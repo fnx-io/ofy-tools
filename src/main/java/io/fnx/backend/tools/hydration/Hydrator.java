@@ -13,7 +13,7 @@ import java.util.*;
  *
  * Then it fetches all requested entities, and fetched objects are used for hydration of original objects.
  *
- * Example: An article has a Key<Author> and you want to deliver information about that article with
+ * Example: An article has a Key&lt;Author&gt; and you want to deliver information about that article with
  * the information about it's author.
  *
  * You can (and should) use hydration mechanism to remove sensitive data from outgoing entities.
@@ -30,13 +30,6 @@ public class Hydrator {
 
 	/**
 	 * Use to hydrate entity, which is not CanBeHydrated itself.
-	 *
-	 * @param entity
-	 * @param recipe
-	 * @param ctx
-	 * @param <ENTITY>
-	 * @param <HC>
-	 * @return
 	 */
 	public <ENTITY, HC extends HydrationContext> void hydrateEntity(ENTITY entity, HydrationRecipe<ENTITY, HC> recipe, HC ctx) {
 		hydrateCollection(Collections.singleton(entity), recipe, ctx);
@@ -44,11 +37,6 @@ public class Hydrator {
 
 	/**
 	 * Use to hydrate entity, which is CanBeHydrated and provides it's own recipe.
-	 *
-	 * @param entity
-	 * @param ctx
-	 * @param <ENTITY>
-	 * @param <HC>
 	 */
 	public <ENTITY extends CanBeHydrated<ENTITY, HC>, HC extends HydrationContext> void hydrateEntity(ENTITY entity, HC ctx) {
 		hydrateCollection(Collections.singleton(entity), entity.getRecipe(), ctx);
@@ -56,12 +44,6 @@ public class Hydrator {
 
 	/**
 	 * Generic entities with shared recipe.
-	 *
-	 * @param entities
-	 * @param recipe
-	 * @param ctx
-	 * @param <ENTITY>
-	 * @param <HC>
 	 */
 	public <ENTITY, HC extends HydrationContext> void hydrateCollection(Iterable<ENTITY> entities, HydrationRecipe<ENTITY, HC> recipe, HC ctx) {
 
@@ -82,11 +64,6 @@ public class Hydrator {
 
 	/**
 	 * Each entity is CanBeHydrated and creates it's own recipe.
-	 *
-	 * @param entities
-	 * @param ctx
-	 * @param <ENTITY>
-	 * @param <HC>
 	 */
 	public <ENTITY extends CanBeHydrated<ENTITY, HC>, HC extends HydrationContext> void hydrateCollection(Iterable<ENTITY> entities, HC ctx) {
 

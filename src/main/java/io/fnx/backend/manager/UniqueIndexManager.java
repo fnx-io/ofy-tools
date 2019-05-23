@@ -24,7 +24,7 @@ import static java.lang.String.format;
  * saving the user, you could call the {@link #saveUniqueIndexOwner(Enum, String, Key)} which will
  * throw if there is already given property with same value owned by another key
  * </p>
- * <pre>
+ * <code>
  *     Key&lt;UserEntity&gt; userKey = ofy.factory().allocateId(UserEntity.class);
  *     user.setKey(userKey);
  *     ofy().transact(new VoidWork() {

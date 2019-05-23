@@ -13,7 +13,7 @@ public interface Randomizer {
     String randomBase64(int length);
 
     /**
-     * @return next random double precision number from range <0.0, 1.0)
+     * @return next random double precision number from range &lt;0.0, 1.0)
      */
     double nextRand();
 }

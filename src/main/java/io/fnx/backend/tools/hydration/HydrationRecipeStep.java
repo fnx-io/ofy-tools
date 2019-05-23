@@ -23,9 +23,6 @@ public interface HydrationRecipeStep<ENTITY, HC extends HydrationContext> {
 	 *
 	 * Note: null or Collection.singletonList(...) are acceptable values.
 	 *
-	 * @param entity
-	 * @param context
-	 * @return
 	 */
     Collection<Key<?>> getDependencies(ENTITY entity, HC context);
 
@@ -35,9 +32,6 @@ public interface HydrationRecipeStep<ENTITY, HC extends HydrationContext> {
 	 * The map of all fetched entities is shared, so changing fetched entity here changes the entity
 	 * for all steps (actually for non-transactional call in whole request).
 	 * 
-	 * @param entity
-	 * @param context
-	 * @param allFetchedEntities
 	 */
 	void executeStep(ENTITY entity, HC context, Map<Key<Object>, Object> allFetchedEntities);
 
