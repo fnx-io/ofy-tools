@@ -4,6 +4,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import io.fnx.backend.tools.auth.PrincipalRole;
+import io.fnx.backend.tools.random.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -129,7 +130,7 @@ public class AuthorizationInterceptorTest {
     private String rolesToString(Collection<? extends PrincipalRole> roles) {
         if (roles == null || roles.isEmpty()) return "No value";
 
-        return roles.stream().map(PrincipalRole::toString).collect(Collectors.joining(","));
+        return StringUtils.join(roles, ",");
     }
 
 }

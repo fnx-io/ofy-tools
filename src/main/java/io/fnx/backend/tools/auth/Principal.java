@@ -10,4 +10,27 @@ public interface Principal {
 
     List<? extends PrincipalRole> getUserRoles();
 
+    default boolean hasAdminRole() {
+        if (hasNoRoles()) return false;
+
+        for (PrincipalRole role : getUserRoles()) {
+            if (role.isAdmin()) return true;
+        }
+        return false;
+    }
+
+    default boolean hasAnonymousRole() {
+        if (hasNoRoles()) return false;
+
+        for (PrincipalRole role : getUserRoles()) {
+            if (role.isAnonymous()) return true;
+        }
+        return false;
+    }
+
+    default boolean hasNoRoles() {
+        List<? extends PrincipalRole> roles = getUserRoles();
+        return roles == null || roles.isEmpty();
+    }
+
 }

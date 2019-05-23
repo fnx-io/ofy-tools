@@ -37,6 +37,12 @@ public class AllowedForAuthenticatedAuthorizationGuard implements AuthorizationG
         if (principal == null) return false;
 
         List<? extends PrincipalRole> roles = principal.getUserRoles();
-        return roles != null && roles.stream().anyMatch(PrincipalRole::isAuthenticated);
+        if (roles == null) return false;
+
+        for (PrincipalRole role : roles) {
+            if (role.isAuthenticated()) return true;
+        }
+
+        return false;
     }
 }

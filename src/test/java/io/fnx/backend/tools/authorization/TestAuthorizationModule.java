@@ -6,6 +6,7 @@ import io.fnx.backend.tools.auth.Principal;
 
 import javax.inject.Provider;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 class TestAuthorizationModule extends AbstractModule {
 
@@ -26,16 +27,13 @@ class TestAuthorizationModule extends AbstractModule {
     }
 
     private AuthorizationGuard[] createAuthorizationGuards() {
-        final ArrayList<AuthorizationGuard> guards = new ArrayList<>();
-        guards.add(new AllowedForAuthenticatedAuthorizationGuard());
-        guards.add(new AllowedForAdminsAuthorizationGuard());
-        guards.add(new AllAllowedAuthorizationGuard());
-        guards.add(new AllowedForRolesAuthorizationGuardImpl());
-        final AllowedForOwnerAuthorizationGuard ownerGuard = new AllowedForOwnerAuthorizationGuard();
-        requestInjection(ownerGuard);
-        guards.add(ownerGuard);
-
-        return guards.toArray(new AuthorizationGuard[0]);
+        return new AuthorizationGuard[]{
+                new AllowedForAuthenticatedAuthorizationGuard(),
+                new AllowedForAdminsAuthorizationGuard(),
+                new AllAllowedAuthorizationGuard(),
+                new AllowedForRolesAuthorizationGuardImpl(),
+                new AllowedForOwnerAuthorizationGuard(),
+        };
     }
 
 }

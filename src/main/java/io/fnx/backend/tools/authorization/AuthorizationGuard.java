@@ -2,6 +2,7 @@ package io.fnx.backend.tools.authorization;
 
 import io.fnx.backend.tools.auth.Principal;
 import io.fnx.backend.tools.auth.PrincipalRole;
+import io.fnx.backend.tools.random.StringUtils;
 import org.aopalliance.intercept.MethodInvocation;
 
 import java.lang.annotation.Annotation;
@@ -23,8 +24,7 @@ public interface AuthorizationGuard {
     default String rolesToString(Collection<? extends PrincipalRole> roles) {
         if (roles == null || roles.isEmpty()) return "No roles";
 
-        return roles.stream().map(PrincipalRole::toString).collect(Collectors.joining(","));
+        return StringUtils.join(roles, ",");
     }
-
 
 }
